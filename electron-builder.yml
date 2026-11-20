@@ -1,0 +1,61 @@
+appId: com.ipflix.desktop
+productName: IPFLIX
+copyright: Copyright © 2026 IPFLIX
+asar: true
+
+directories:
+  buildResources: electron/assets
+  output: release
+
+# Keep app.asar lean and strictly free of .env secrets, dev tooling, or source files
+files:
+  - dist-electron/main.cjs
+  - dist-electron/preload.cjs
+  - electron/assets/icon.ico
+  - electron/assets/icon.png
+  - package.json
+  - "!**/.env*"
+  - "!*.env*"
+  - "!node_modules/**/*"
+  - "!src/**/*"
+  - "!public/**/*"
+  - "!release/**/*"
+
+# Unpacked production frontend & self-contained Express backend executed by Electron's built-in Node runtime
+extraResources:
+  - from: dist
+    to: dist
+  - from: dist-electron/server.cjs
+    to: backend/server.cjs
+  - from: electron/assets/icon.ico
+    to: assets/icon.ico
+  - from: electron/assets/icon.png
+    to: assets/icon.png
+
+win:
+  icon: electron/assets/icon.ico
+  artifactName: "IPFLIX Setup.${ext}"
+  requestedExecutionLevel: asInvoker
+  signAndEditExecutable: true
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: IPFLIX
+  uninstallDisplayName: IPFLIX
+  installerIcon: electron/assets/icon.ico
+  uninstallerIcon: electron/assets/icon.ico
+  installerHeaderIcon: electron/assets/icon.ico
+  runAfterFinish: true
+  deleteAppDataOnUninstall: false
+  installerLanguages:
+    - tr_TR
+    - en_US
+  displayLanguageSelector: false

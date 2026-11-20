@@ -1,0 +1,624 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Pillar 4.1: Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // =========================================================================
+    // Hardened Global Primitives
+    // =========================================================================
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerified() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function userDocExistsOrCreated(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId))
+        || existsAfter(/databases/$(database)/documents/users/$(userId));
+    }
+
+    function profileDocExistsOrCreated(userId, profileId) {
+      return exists(/databases/$(database)/documents/users/$(userId)/profiles/$(profileId))
+        || existsAfter(/databases/$(database)/documents/users/$(userId)/profiles/$(profileId));
+    }
+
+    // =========================================================================
+    // Entity Validation Blueprints (Synchronized verbatim with firebase-blueprint.json)
+    // =========================================================================
+    function isValidSettings(s) {
+      return s is map
+        && s.keys().hasAll([
+          'language',
+          'defaultEngine',
+          'defaultUserAgent',
+          'defaultAspectRatio',
+          'autoPlayNextEpisode',
+          'preferredSubtitleLang',
+          'lowBandwidthMode',
+          'tvRemoteMode',
+          'introSoundEnabled',
+          'hideUnavailableChannels',
+          'epgTimeOffsetHours',
+          'customEpgUrl'
+        ])
+        && s.keys().hasOnly([
+          'language',
+          'defaultEngine',
+          'defaultUserAgent',
+          'defaultAspectRatio',
+          'autoPlayNextEpisode',
+          'preferredSubtitleLang',
+          'lowBandwidthMode',
+          'tvRemoteMode',
+          'introSoundEnabled',
+          'hideUnavailableChannels',
+          'epgTimeOffsetHours',
+          'customEpgUrl'
+        ])
+        && s.language in ['tr', 'en']
+        && s.defaultEngine in ['auto', 'hls', 'mpegts', 'dash', 'direct', 'audiofix', 'transcode']
+        && s.defaultUserAgent is string && s.defaultUserAgent.size() <= 256
+        && s.defaultAspectRatio in ['auto', '16:9', '4:3', 'fit', 'fill']
+        && s.autoPlayNextEpisode is bool
+        && s.preferredSubtitleLang is string && s.preferredSubtitleLang.size() <= 16
+        && s.lowBandwidthMode is bool
+        && s.tvRemoteMode is bool
+        && s.introSoundEnabled is bool
+        && s.hideUnavailableChannels is bool
+        && s.epgTimeOffsetHours is number && s.epgTimeOffsetHours >= -12 && s.epgTimeOffsetHours <= 12
+        && s.customEpgUrl is string && s.customEpgUrl.size() <= 1024;
+    }
+
+    function isValidUserAccount(data, userId) {
+      return data.keys().hasAll([
+          'uid',
+          'email',
+          'displayName',
+          'vaultSalt',
+          'vaultCheck',
+          'activeProfileId',
+          'activePlaylistId',
+          'onboardingCompleted',
+          'settings',
+          'settingsUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'email',
+          'displayName',
+          'vaultSalt',
+          'vaultCheck',
+          'activeProfileId',
+          'activePlaylistId',
+          'onboardingCompleted',
+          'settings',
+          'settingsUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.uid)
+        && data.uid == userId
+        && data.uid == request.auth.uid
+        && data.email is string && data.email.size() <= 254
+        && data.displayName is string && data.displayName.size() <= 80
+        && data.vaultSalt is string && data.vaultSalt.size() <= 64
+        && data.vaultCheck is string && data.vaultCheck.size() <= 512
+        && data.activeProfileId is string && data.activeProfileId.size() <= 128
+        && data.activePlaylistId is string && data.activePlaylistId.size() <= 128
+        && data.onboardingCompleted is bool
+        && isValidSettings(data.settings)
+        && data.settingsUpdatedAt is number && data.settingsUpdatedAt >= 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidIptvAccount(data, userId, accountId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'name',
+          'type',
+          'isDefault',
+          'serverUrl',
+          'resolvedServerUrl',
+          'username',
+          'userAgent',
+          'liveFormat',
+          'encryptedCredentials',
+          'channelCount',
+          'movieCount',
+          'seriesCount',
+          'clientUpdatedAt',
+          'deleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'name',
+          'type',
+          'isDefault',
+          'serverUrl',
+          'resolvedServerUrl',
+          'username',
+          'userAgent',
+          'liveFormat',
+          'encryptedCredentials',
+          'channelCount',
+          'movieCount',
+          'seriesCount',
+          'clientUpdatedAt',
+          'deleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == accountId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 120
+        && data.type in ['xtream', 'm3u_url', 'm3u_file', 'local']
+        && data.isDefault is bool
+        && data.serverUrl is string && data.serverUrl.size() <= 512
+        && data.resolvedServerUrl is string && data.resolvedServerUrl.size() <= 512
+        && data.username is string && data.username.size() <= 160
+        && data.userAgent is string && data.userAgent.size() <= 256
+        && data.liveFormat in ['auto', 'm3u8', 'ts']
+        && data.encryptedCredentials is string && data.encryptedCredentials.size() <= 8192
+        && data.channelCount is number && data.channelCount >= 0 && data.channelCount <= 500000
+        && data.movieCount is number && data.movieCount >= 0 && data.movieCount <= 500000
+        && data.seriesCount is number && data.seriesCount >= 0 && data.seriesCount <= 500000
+        && data.clientUpdatedAt is number && data.clientUpdatedAt >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProfile(data, userId, profileId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'name',
+          'avatarId',
+          'isKids',
+          'encryptedPin',
+          'hasPin',
+          'clientCreatedAt',
+          'clientUpdatedAt',
+          'deleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'name',
+          'avatarId',
+          'isKids',
+          'encryptedPin',
+          'hasPin',
+          'clientCreatedAt',
+          'clientUpdatedAt',
+          'deleted',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id == profileId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 40
+        && data.avatarId in ['crimson', 'cobalt', 'emerald', 'amber', 'violet', 'coral', 'teal', 'kids']
+        && data.isKids is bool
+        && data.encryptedPin is string && data.encryptedPin.size() <= 512
+        && data.hasPin is bool
+        && ((data.hasPin == false && data.encryptedPin == '') || (data.hasPin == true && data.encryptedPin.size() >= 16))
+        && data.clientCreatedAt is number && data.clientCreatedAt >= 0
+        && data.clientUpdatedAt is number && data.clientUpdatedAt >= 0
+        && data.deleted is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProfileListItem(data, userId, profileId) {
+      return data.keys().hasAll([
+          'itemId',
+          'profileId',
+          'ownerId',
+          'listType',
+          'active',
+          'clientUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'itemId',
+          'profileId',
+          'ownerId',
+          'listType',
+          'active',
+          'clientUpdatedAt',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 160
+        && isValidId(data.profileId)
+        && data.profileId == profileId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.listType in ['favorite', 'watchlist', 'hidden_channel', 'recent_channel']
+        && data.active is bool
+        && data.clientUpdatedAt is number && data.clientUpdatedAt >= 0
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidWatchHistoryEntry(data, userId, profileId) {
+      return data.keys().hasAll([
+          'itemId',
+          'profileId',
+          'ownerId',
+          'type',
+          'title',
+          'subtitle',
+          'poster',
+          'backdrop',
+          'position',
+          'duration',
+          'seriesId',
+          'seasonNumber',
+          'episodeNumber',
+          'episodeId',
+          'clientUpdatedAt',
+          'cleared',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'itemId',
+          'profileId',
+          'ownerId',
+          'type',
+          'title',
+          'subtitle',
+          'poster',
+          'backdrop',
+          'position',
+          'duration',
+          'seriesId',
+          'seasonNumber',
+          'episodeNumber',
+          'episodeId',
+          'clientUpdatedAt',
+          'cleared',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.itemId is string && data.itemId.size() >= 1 && data.itemId.size() <= 160
+        && isValidId(data.profileId)
+        && data.profileId == profileId
+        && isValidId(data.ownerId)
+        && data.ownerId == userId
+        && data.ownerId == request.auth.uid
+        && data.type in ['movie', 'episode', 'live']
+        && data.title is string && data.title.size() <= 240
+        && data.subtitle is string && data.subtitle.size() <= 240
+        && data.poster is string && data.poster.size() <= 1024
+        && data.backdrop is string && data.backdrop.size() <= 1024
+        && data.position is number && data.position >= 0 && data.position <= 1000000
+        && data.duration is number && data.duration >= 0 && data.duration <= 1000000
+        && data.seriesId is string && data.seriesId.size() <= 160
+        && data.seasonNumber is number && data.seasonNumber >= 0 && data.seasonNumber <= 500
+        && data.episodeNumber is number && data.episodeNumber >= 0 && data.episodeNumber <= 10000
+        && data.episodeId is string && data.episodeId.size() <= 160
+        && data.clientUpdatedAt is number && data.clientUpdatedAt >= 0
+        && data.cleared is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // =========================================================================
+    // Collection Rules
+    // =========================================================================
+
+    // Root IPFLIX User Account (PII isolated strictly to owner)
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if false;
+
+      allow create: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidUserAccount(incoming(), userId)
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedOwner(userId)
+        && isValidId(userId)
+        && isValidUserAccount(incoming(), userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          // Action: Update synced preferences, active selections, or display info
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'email',
+            'displayName',
+            'activeProfileId',
+            'activePlaylistId',
+            'onboardingCompleted',
+            'settings',
+            'settingsUpdatedAt',
+            'updatedAt'
+          ])
+          ||
+          // Action: Initialize or rotate zero-plaintext vault metadata
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'vaultSalt',
+            'vaultCheck',
+            'updatedAt'
+          ])
+        );
+
+      allow delete: if isVerifiedOwner(userId) && isValidId(userId);
+
+      // Synced IPTV Provider Accounts (credentials strictly client-side encrypted)
+      match /iptvAccounts/{accountId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(accountId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(accountId)
+          && isValidIptvAccount(incoming(), userId, accountId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExistsOrCreated(userId);
+
+        allow update: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(accountId)
+          && isValidIptvAccount(incoming(), userId, accountId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && userDocExistsOrCreated(userId)
+          && (
+            // Action: Sync updated IPTV account details or counts
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name',
+              'type',
+              'isDefault',
+              'serverUrl',
+              'resolvedServerUrl',
+              'username',
+              'userAgent',
+              'liveFormat',
+              'encryptedCredentials',
+              'channelCount',
+              'movieCount',
+              'seriesCount',
+              'clientUpdatedAt',
+              'deleted',
+              'updatedAt'
+            ])
+            ||
+            // Action: Soft-delete IPTV account tombstone
+            (
+              incoming().deleted == true
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'deleted',
+                'clientUpdatedAt',
+                'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(accountId)
+          && userDocExistsOrCreated(userId);
+      }
+
+      // Synced Streaming User Profiles
+      match /profiles/{profileId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(profileId);
+        allow list: if isOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(profileId)
+          && isValidProfile(incoming(), userId, profileId)
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && userDocExistsOrCreated(userId);
+
+        allow update: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(profileId)
+          && isValidProfile(incoming(), userId, profileId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().clientCreatedAt == existing().clientCreatedAt
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && userDocExistsOrCreated(userId)
+          && (
+            // Action: Edit profile customization & PIN
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'name',
+              'avatarId',
+              'isKids',
+              'encryptedPin',
+              'hasPin',
+              'clientUpdatedAt',
+              'deleted',
+              'updatedAt'
+            ])
+            ||
+            // Action: Soft-delete profile tombstone
+            (
+              incoming().deleted == true
+              && incoming().diff(existing()).affectedKeys().hasOnly([
+                'deleted',
+                'clientUpdatedAt',
+                'updatedAt'
+              ])
+            )
+          );
+
+        allow delete: if isVerifiedOwner(userId)
+          && isValidId(userId)
+          && isValidId(profileId)
+          && userDocExistsOrCreated(userId);
+
+        // Per-Profile Isolated Favorites, Watchlist, Recent & Hidden Channels
+        match /listItems/{itemKey} {
+          allow get: if isOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey);
+
+          allow list: if isOwner(userId)
+            && resource.data.ownerId == request.auth.uid;
+
+          allow create: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && isValidProfileListItem(incoming(), userId, profileId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time
+            && userDocExistsOrCreated(userId)
+            && profileDocExistsOrCreated(userId, profileId);
+
+          allow update: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && isValidProfileListItem(incoming(), userId, profileId)
+            && incoming().itemId == existing().itemId
+            && incoming().profileId == existing().profileId
+            && incoming().ownerId == existing().ownerId
+            && incoming().listType == existing().listType
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && userDocExistsOrCreated(userId)
+            && profileDocExistsOrCreated(userId, profileId)
+            && incoming().diff(existing()).affectedKeys().hasOnly([
+              'active',
+              'clientUpdatedAt',
+              'updatedAt'
+            ]);
+
+          allow delete: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && userDocExistsOrCreated(userId);
+        }
+
+        // Per-Profile Watch History & Exact Resume Positions
+        match /watchHistory/{itemKey} {
+          allow get: if isOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey);
+
+          allow list: if isOwner(userId)
+            && resource.data.ownerId == request.auth.uid;
+
+          allow create: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && isValidWatchHistoryEntry(incoming(), userId, profileId)
+            && incoming().createdAt == request.time
+            && incoming().updatedAt == request.time
+            && userDocExistsOrCreated(userId)
+            && profileDocExistsOrCreated(userId, profileId);
+
+          allow update: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && isValidWatchHistoryEntry(incoming(), userId, profileId)
+            && incoming().itemId == existing().itemId
+            && incoming().profileId == existing().profileId
+            && incoming().ownerId == existing().ownerId
+            && incoming().createdAt == existing().createdAt
+            && incoming().updatedAt == request.time
+            && userDocExistsOrCreated(userId)
+            && profileDocExistsOrCreated(userId, profileId)
+            && (
+              // Action: Update playback resume position & metadata
+              incoming().diff(existing()).affectedKeys().hasOnly([
+                'type',
+                'title',
+                'subtitle',
+                'poster',
+                'backdrop',
+                'position',
+                'duration',
+                'seriesId',
+                'seasonNumber',
+                'episodeNumber',
+                'episodeId',
+                'clientUpdatedAt',
+                'cleared',
+                'updatedAt'
+              ])
+              ||
+              // Action: Clear history entry
+              (
+                incoming().cleared == true
+                && incoming().diff(existing()).affectedKeys().hasOnly([
+                  'cleared',
+                  'clientUpdatedAt',
+                  'updatedAt'
+                ])
+              )
+            );
+
+          allow delete: if isVerifiedOwner(userId)
+            && isValidId(userId)
+            && isValidId(profileId)
+            && isValidId(itemKey)
+            && userDocExistsOrCreated(userId);
+        }
+      }
+    }
+  }
+}

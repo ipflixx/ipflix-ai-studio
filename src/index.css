@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+
+  --color-obsidian: #08090D;
+  --color-charcoal: #12141B;
+  --color-surface: #181B24;
+  --color-surface-hover: #212533;
+  --color-crimson: #E50914;
+  --color-crimson-hover: #F6121D;
+}
+
+@layer base {
+  html {
+    background-color: #08090D;
+    color: #F5F7FA;
+    font-family: var(--font-sans);
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: #08090D;
+    color: #F5F7FA;
+    overflow-x: clip;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+  }
+
+  button:not(:disabled),
+  a[href],
+  select,
+  [role="button"] {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  :focus-visible {
+    outline: 2px solid #E50914;
+    outline-offset: 2px;
+  }
+}
+
+/* Enhanced Android TV & keyboard focus presentation */
+.tv-focus-mode :focus-visible,
+.tv-focus-mode [data-focusable="true"]:focus {
+  outline: 3px solid #E50914;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(229, 9, 20, 0.28), 0 14px 32px -8px rgba(0, 0, 0, 0.75);
+  transform: scale(1.025);
+  z-index: 20;
+}
+
+.ipflix-card-surface {
+  will-change: transform;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* GPU-composited metallic sheen sweep for IPFLIX launch animation */
+@keyframes ipflix-sheen-pass {
+  0% {
+    transform: translateX(-160%) skewX(-22deg);
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.95;
+  }
+  72% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(340%) skewX(-22deg);
+    opacity: 0;
+  }
+}
+
+.ipflix-sheen-sweep {
+  transform: translateX(-160%) skewX(-22deg);
+  opacity: 0;
+  will-change: transform, opacity;
+  animation: ipflix-sheen-pass 0.95s cubic-bezier(0.22, 1, 0.36, 1) 1.38s forwards;
+}
+
+/* Subtle custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #08090D;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+/* Hide scrollbar for Netflix horizontal rails while keeping scroll functional */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ipflix-sheen-sweep {
+    display: none;
+  }
+}

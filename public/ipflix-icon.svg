@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="ipflix-tile-bg" x1="64" y1="32" x2="448" y2="480" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#171A23" />
+      <stop offset="55%" stop-color="#0E1017" />
+      <stop offset="100%" stop-color="#07080C" />
+    </linearGradient>
+    <radialGradient id="ipflix-ambient-red" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(182 256) rotate(90) scale(210 210)">
+      <stop offset="0%" stop-color="#E50914" stop-opacity="0.28" />
+      <stop offset="100%" stop-color="#E50914" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="ipflix-beam-red" x1="128" y1="114" x2="178" y2="398" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF2934" />
+      <stop offset="52%" stop-color="#E50914" />
+      <stop offset="100%" stop-color="#B8060F" />
+    </linearGradient>
+    <linearGradient id="ipflix-prism-white" x1="212" y1="116" x2="394" y2="386" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="72%" stop-color="#F1F4F9" />
+      <stop offset="100%" stop-color="#CFD6E4" />
+    </linearGradient>
+  </defs>
+
+  <!-- Obsidian App Icon Squircle Surface -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#ipflix-tile-bg)" />
+  <rect x="22" y="22" width="468" height="468" rx="106" stroke="#FFFFFF" stroke-opacity="0.1" stroke-width="4" />
+
+  <!-- Subtle Crimson Studio Backglow -->
+  <rect x="16" y="16" width="480" height="480" rx="112" fill="url(#ipflix-ambient-red)" />
+
+  <!-- Left Monolith "I" Signal Pillar (IPFLIX Crimson) -->
+  <rect x="122" y="114" width="56" height="284" rx="18" fill="url(#ipflix-beam-red)" />
+
+  <!-- Forward Cinema Play Prism -->
+  <path
+    d="M214 134.5C214 119.2 230.6 109.7 243.8 117.4L393.8 205.2C406.8 212.8 414.8 226.7 414.8 241.8V270.2C414.8 285.3 406.8 299.2 393.8 306.8L243.8 394.6C230.6 402.3 214 392.8 214 377.5V134.5Z"
+    fill="url(#ipflix-prism-white)"
+  />
+
+  <!-- Precision Crimson Kinetic Cut Accent -->
+  <path
+    d="M214 316L348 256L214 366C214 352 214 334 214 316Z"
+    fill="#E50914"
+    fill-opacity="0.92"
+  />
+</svg>

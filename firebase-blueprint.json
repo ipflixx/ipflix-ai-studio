@@ -1,0 +1,426 @@
+{
+  "entities": {
+    "UserAccount": {
+      "title": "UserAccount",
+      "description": "Root IPFLIX cloud user account storing owner identity, zero-plaintext vault salt/verifier, active selections, and synced playback/app preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID matching document ID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 254,
+          "description": "Authenticated user email address (strictly owner-only PII)."
+        },
+        "displayName": {
+          "type": "string",
+          "maxLength": 80,
+          "description": "Optional user display name."
+        },
+        "vaultSalt": {
+          "type": "string",
+          "maxLength": 64,
+          "description": "Base64 random PBKDF2 salt for client-side AES-256-GCM IPTV secret encryption."
+        },
+        "vaultCheck": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "AES-256-GCM encrypted verification token used to confirm vault decryption key on new devices."
+        },
+        "activeProfileId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Last active profile identifier."
+        },
+        "activePlaylistId": {
+          "type": "string",
+          "maxLength": 128,
+          "description": "Last active IPTV source identifier."
+        },
+        "onboardingCompleted": {
+          "type": "boolean",
+          "description": "Whether initial IPTV onboarding has been completed."
+        },
+        "settings": {
+          "type": "object",
+          "description": "Synced IPFLIX player and interface preferences."
+        },
+        "settingsUpdatedAt": {
+          "type": "number",
+          "description": "Client epoch ms timestamp for last-write-wins settings conflict resolution."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp (immutable)."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-modified timestamp."
+        }
+      },
+      "required": [
+        "uid",
+        "email",
+        "displayName",
+        "vaultSalt",
+        "vaultCheck",
+        "activeProfileId",
+        "activePlaylistId",
+        "onboardingCompleted",
+        "settings",
+        "settingsUpdatedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "IptvAccount": {
+      "title": "IptvAccount",
+      "description": "Synced IPTV provider account (Xtream Codes / M3U) with all credentials encrypted client-side via AES-256-GCM.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "type": {
+          "type": "string",
+          "enum": ["xtream", "m3u_url", "m3u_file", "local"]
+        },
+        "isDefault": {
+          "type": "boolean"
+        },
+        "serverUrl": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "resolvedServerUrl": {
+          "type": "string",
+          "maxLength": 512
+        },
+        "username": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "userAgent": {
+          "type": "string",
+          "maxLength": 256
+        },
+        "liveFormat": {
+          "type": "string",
+          "enum": ["auto", "m3u8", "ts"]
+        },
+        "encryptedCredentials": {
+          "type": "string",
+          "maxLength": 8192,
+          "description": "AES-256-GCM ciphertext containing password, m3uUrl, and epgUrl; never plaintext."
+        },
+        "channelCount": {
+          "type": "number"
+        },
+        "movieCount": {
+          "type": "number"
+        },
+        "seriesCount": {
+          "type": "number"
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "type",
+        "isDefault",
+        "serverUrl",
+        "resolvedServerUrl",
+        "username",
+        "userAgent",
+        "liveFormat",
+        "encryptedCredentials",
+        "channelCount",
+        "movieCount",
+        "seriesCount",
+        "clientUpdatedAt",
+        "deleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Netflix-style user profile with independent avatar, Kids filter, and optional encrypted PIN.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "avatarId": {
+          "type": "string",
+          "enum": ["crimson", "cobalt", "emerald", "amber", "violet", "coral", "teal", "kids"]
+        },
+        "isKids": {
+          "type": "boolean"
+        },
+        "encryptedPin": {
+          "type": "string",
+          "maxLength": 512,
+          "description": "AES-256-GCM ciphertext of 4-digit PIN when locked, or empty string."
+        },
+        "hasPin": {
+          "type": "boolean"
+        },
+        "clientCreatedAt": {
+          "type": "number"
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "deleted": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "avatarId",
+        "isKids",
+        "encryptedPin",
+        "hasPin",
+        "clientCreatedAt",
+        "clientUpdatedAt",
+        "deleted",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "ProfileListItem": {
+      "title": "ProfileListItem",
+      "description": "Per-profile isolated favorite, watchlist, recent channel, or hidden channel item with LWW conflict tracking.",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "listType": {
+          "type": "string",
+          "enum": ["favorite", "watchlist", "hidden_channel", "recent_channel"]
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "itemId",
+        "profileId",
+        "ownerId",
+        "listType",
+        "active",
+        "clientUpdatedAt",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "WatchHistoryEntry": {
+      "title": "WatchHistoryEntry",
+      "description": "Per-profile watch history and exact resume position (seconds/duration) for movies and series episodes.",
+      "type": "object",
+      "properties": {
+        "itemId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 160
+        },
+        "profileId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["movie", "episode", "live"]
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "subtitle": {
+          "type": "string",
+          "maxLength": 240
+        },
+        "poster": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "backdrop": {
+          "type": "string",
+          "maxLength": 1024
+        },
+        "position": {
+          "type": "number"
+        },
+        "duration": {
+          "type": "number"
+        },
+        "seriesId": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "seasonNumber": {
+          "type": "number"
+        },
+        "episodeNumber": {
+          "type": "number"
+        },
+        "episodeId": {
+          "type": "string",
+          "maxLength": 160
+        },
+        "clientUpdatedAt": {
+          "type": "number"
+        },
+        "cleared": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "itemId",
+        "profileId",
+        "ownerId",
+        "type",
+        "title",
+        "subtitle",
+        "poster",
+        "backdrop",
+        "position",
+        "duration",
+        "seriesId",
+        "seasonNumber",
+        "episodeNumber",
+        "episodeId",
+        "clientUpdatedAt",
+        "cleared",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserAccount" },
+      "description": "Private owner-only IPFLIX cloud account metadata, vault salt/check, and synced app preferences."
+    },
+    "/users/{userId}/iptvAccounts/{accountId}": {
+      "schema": { "$ref": "#/entities/IptvAccount" },
+      "description": "Per-user synced IPTV provider sources with client-side AES-256-GCM encrypted credentials."
+    },
+    "/users/{userId}/profiles/{profileId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user customizable streaming profiles with isolated history, favorites, and optional encrypted PIN."
+    },
+    "/users/{userId}/profiles/{profileId}/listItems/{itemKey}": {
+      "schema": { "$ref": "#/entities/ProfileListItem" },
+      "description": "Per-profile isolated favorites, watchlist, recent channels, and hidden channels."
+    },
+    "/users/{userId}/profiles/{profileId}/watchHistory/{itemKey}": {
+      "schema": { "$ref": "#/entities/WatchHistoryEntry" },
+      "description": "Per-profile watch history, recently watched titles, and exact resume timestamps."
+    }
+  }
+}

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 160" fill="none">
+  <defs>
+    <linearGradient id="logo-tile-bg" x1="14" y1="10" x2="146" y2="150" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#171A23" />
+      <stop offset="60%" stop-color="#0E1017" />
+      <stop offset="100%" stop-color="#07080C" />
+    </linearGradient>
+    <linearGradient id="logo-beam-red" x1="40" y1="36" x2="56" y2="124" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FF2934" />
+      <stop offset="52%" stop-color="#E50914" />
+      <stop offset="100%" stop-color="#B8060F" />
+    </linearGradient>
+    <linearGradient id="logo-prism-white" x1="68" y1="36" x2="124" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="100%" stop-color="#D7DDE9" />
+    </linearGradient>
+  </defs>
+
+  <!-- Symbol Tile -->
+  <rect x="8" y="8" width="144" height="144" rx="34" fill="url(#logo-tile-bg)" />
+  <rect x="10" y="10" width="140" height="140" rx="32" stroke="#FFFFFF" stroke-opacity="0.12" stroke-width="2" />
+  <rect x="40" y="36" width="17" height="88" rx="6" fill="url(#logo-beam-red)" />
+  <path
+    d="M68 42.5C68 37.7 73.2 34.8 77.3 37.2L123.6 64.3C127.6 66.7 130 71 130 75.7V84.3C130 89 127.6 93.3 123.6 95.7L77.3 122.8C73.2 125.2 68 122.3 68 117.5V42.5Z"
+    fill="url(#logo-prism-white)"
+  />
+  <path d="M68 98.5L109.5 80L68 114V98.5Z" fill="#E50914" />
+
+  <!-- IPFLIX Geometric Wordmark -->
+  <text
+    x="182"
+    y="108"
+    font-family="'Outfit', 'Inter', system-ui, -apple-system, sans-serif"
+    font-size="88"
+    font-weight="800"
+    letter-spacing="5"
+    fill="#F5F7FA"
+  >IP<tspan fill="#E50914">FLIX</tspan></text>
+</svg>

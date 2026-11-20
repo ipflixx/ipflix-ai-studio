@@ -1,0 +1,6 @@
+{
+  "name": "IPFLIX",
+  "description": "Commercial-grade IPTV streaming platform with Xtream Codes, M3U/M3U8, XMLTV EPG, and server-side multi-engine proxy playback.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
