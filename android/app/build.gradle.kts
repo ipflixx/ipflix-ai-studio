@@ -19,6 +19,48 @@ android {
         buildConfig = true
     }
 
+    val keystorePath = (project.findProperty("IPFLIX_KEYSTORE_PATH") as String?)
+        ?: System.getenv("IPFLIX_KEYSTORE_PATH")
+        ?: ""
+    val keystorePassword = (project.findProperty("IPFLIX_KEYSTORE_PASSWORD") as String?)
+        ?: System.getenv("IPFLIX_KEYSTORE_PASSWORD")
+        ?: ""
+    val keyAliasName = (project.findProperty("IPFLIX_KEY_ALIAS") as String?)
+        ?: System.getenv("IPFLIX_KEY_ALIAS")
+        ?: ""
+    val keyPasswordValue = (project.findProperty("IPFLIX_KEY_PASSWORD") as String?)
+        ?: System.getenv("IPFLIX_KEY_PASSWORD")
+        ?: ""
+    val requireSigning = ((project.findProperty("IPFLIX_REQUIRE_SIGNING") as String?)
+        ?: System.getenv("IPFLIX_REQUIRE_SIGNING")
+        ?: "false").equals("true", ignoreCase = true)
+
+    val hasReleaseSigning = keystorePath.isNotBlank() &&
+        file(keystorePath).exists() &&
+        keystorePassword.isNotBlank() &&
+        keyAliasName.isNotBlank() &&
+        keyPasswordValue.isNotBlank()
+
+    if (requireSigning && !hasReleaseSigning) {
+        throw GradleException(
+            "Release imzalama gerekli ancak IPFLIX_KEYSTORE_PATH / IPFLIX_KEYSTORE_PASSWORD / IPFLIX_KEY_ALIAS / IPFLIX_KEY_PASSWORD eksik."
+        )
+    }
+
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = file(keystorePath)
+                storePassword = keystorePassword
+                keyAlias = keyAliasName
+                keyPassword = keyPasswordValue
+                enableV1Signing = true
+                enableV2Signing = true
+                enableV3Signing = true
+            }
+        }
+    }
+
     flavorDimensions += "channel"
     productFlavors {
         create("phone") {
@@ -28,6 +70,7 @@ android {
         }
         create("tv") {
             dimension = "channel"
+            applicationIdSuffix = ".tv"
             buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"android_tv_apk\"")
             buildConfigField("boolean", "ALLOW_EXTERNAL_APK_INSTALL", "true")
         }
@@ -38,6 +81,7 @@ android {
         }
         create("playTv") {
             dimension = "channel"
+            applicationIdSuffix = ".tv"
             buildConfigField("String", "DISTRIBUTION_CHANNEL", "\"android_tv_play\"")
             buildConfigField("boolean", "ALLOW_EXTERNAL_APK_INSTALL", "false")
         }
@@ -47,6 +91,9 @@ android {
         release {
             isMinifyEnabled = false
             isShrinkResources = false
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
         debug {
             isDebuggable = true

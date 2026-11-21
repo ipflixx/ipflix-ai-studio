@@ -609,7 +609,7 @@ class LocalApiServer(
             return
         }
 
-        val apiConn = (URL("https://api.github.com/repos/ipflixx/ipflix/releases").openConnection() as HttpsURLConnection).apply {
+        val apiConn = (URL("https://api.github.com/repos/ipflixx/ipflix-ai-studio/releases").openConnection() as HttpsURLConnection).apply {
             connectTimeout = 15000
             readTimeout = 15000
             setRequestProperty("User-Agent", "IPFlix-Android/$versionName")
@@ -774,7 +774,7 @@ class LocalApiServer(
             .put("sha256Source", shaSource)
             .put("minimumSupportedVersion", "0.0.0")
             .put("mandatoryUpdate", manifest?.optBoolean("mandatoryUpdate", false) ?: false)
-            .put("releaseHtmlUrl", latest.optString("html_url", "https://github.com/ipflixx/ipflix/releases"))
+            .put("releaseHtmlUrl", latest.optString("html_url", "https://github.com/ipflixx/ipflix-ai-studio/releases"))
 
         val statusStr = when {
             !isNewer -> "up_to_date"
@@ -803,6 +803,9 @@ class LocalApiServer(
                 ?: list.firstOrNull { it.optString("name").endsWith(".apk", ignoreCase = true) }
         } else {
             list.firstOrNull {
+                val n = it.optString("name")
+                Regex("ipflix[-_ ]?android[-_ ]?phone.*\\.apk$", RegexOption.IGNORE_CASE).containsMatchIn(n) && !n.contains("tv", ignoreCase = true)
+            } ?: list.firstOrNull {
                 val n = it.optString("name")
                 Regex("ipflix[-_ ]?android.*\\.apk$", RegexOption.IGNORE_CASE).containsMatchIn(n) && !n.contains("tv", ignoreCase = true)
             } ?: list.firstOrNull {

@@ -1,0 +1,81 @@
+name: Build and Release IPFLIX Windows
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ipflix-windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-release-windows:
+    name: Build & Publish IPFlix-Windows-Setup.exe
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: TypeScript check
+        run: npm run lint
+
+      - name: Build production Vite bundle and Electron backend
+        run: |
+          npm run build
+          npm run electron:build:main
+
+      - name: Build Windows NSIS Setup EXE
+        run: npx electron-builder --config electron-builder.yml --win nsis --publish never
+
+      - name: Verify IPFlix-Windows-Setup.exe & generate checksums
+        shell: pwsh
+        run: |
+          $exe = "release/IPFlix-Windows-Setup.exe"
+          if (-not (Test-Path $exe)) {
+            throw "Expected Windows installer not found at $exe"
+          }
+          $bytes = [System.IO.File]::ReadAllBytes($exe)
+          if ($bytes.Length -lt 10000000 -or $bytes[0] -ne 0x4D -or $bytes[1] -ne 0x5A) {
+            throw "Invalid PE executable header or file too small ($($bytes.Length) bytes)"
+          }
+          node scripts/generate-release-checksums.mjs
+          Get-Content release/SHA256SUMS.txt
+
+      - name: Publish Windows Release to GitHub Releases
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ inputs.tag_name }}
+          name: IPFLIX ${{ inputs.tag_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          body: |
+            ## IPFLIX ${{ inputs.tag_name }} (Windows)
+            Resmi Windows masaüstü kurulum paketi (NSIS Setup).
+
+            ### İndirme Dosyası
+            - `IPFlix-Windows-Setup.exe`
+            - `SHA256SUMS.txt` ve `ipflix-release.json`
+          files: |
+            release/IPFlix-Windows-Setup.exe
+            release/IPFlix-Windows-Setup.exe.sha256
+            release/SHA256SUMS.txt
+            release/ipflix-release.json

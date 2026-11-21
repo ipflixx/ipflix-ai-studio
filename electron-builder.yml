@@ -34,7 +34,7 @@ extraResources:
 
 win:
   icon: electron/assets/icon.ico
-  artifactName: "IPFLIX Setup.${ext}"
+  artifactName: "IPFlix-Windows-Setup.${ext}"
   requestedExecutionLevel: asInvoker
   signAndEditExecutable: true
   target:

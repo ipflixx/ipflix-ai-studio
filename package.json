@@ -19,7 +19,7 @@
     "electron:preview": "npm run build && npm run electron:build:main && node scripts/run-electron.mjs prod",
     "electron:pack": "npm run build && npm run electron:build:main && electron-builder --config electron-builder.yml --dir",
     "dist:win": "npm run build && npm run electron:build:main && electron-builder --config electron-builder.yml --win nsis",
-    "dist:win:nsis": "npm run build && npm run electron:build:main && electron-builder --config electron-builder.yml --dir && node scripts/build-win-installer.mjs",
+    "dist:win:nsis": "npm run build && npm run electron:build:main && electron-builder --config electron-builder.yml --win --dir && node scripts/build-win-installer.mjs",
     "dist:android": "npm run build && node scripts/build-android.mjs"
   },
   "dependencies": {

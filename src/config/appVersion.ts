@@ -4,7 +4,7 @@ export const ANDROID_APPLICATION_ID = 'com.ipflix.app';
 export const WINDOWS_APP_ID = 'com.ipflix.desktop';
 
 export const GITHUB_OWNER = 'ipflixx';
-export const GITHUB_REPO = 'ipflix';
+export const GITHUB_REPO = 'ipflix-ai-studio';
 export const GITHUB_RELEASES_API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
 export const GITHUB_LATEST_RELEASE_API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases/latest`;
 export const GITHUB_RELEASES_PAGE = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;

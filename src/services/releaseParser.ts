@@ -188,6 +188,9 @@ export function pickAssetForChannel(
   if (channel === 'android_apk') {
     return (
       validAssets.find(
+        (a) => /ipflix[-_ ]?android[-_ ]?phone.*\.apk$/i.test(a.name) && !/tv/i.test(a.name)
+      ) ||
+      validAssets.find(
         (a) => /ipflix[-_ ]?android.*\.apk$/i.test(a.name) && !/tv/i.test(a.name)
       ) ||
       validAssets.find((a) => /\.apk$/i.test(a.name) && !/tv/i.test(a.name)) ||

@@ -9,3 +9,7 @@ coverage/
 .env*
 !.env.example
 .backups/
+android/.gradle/
+android/app/build/
+android/local.properties
+android/app/src/main/assets/www/
